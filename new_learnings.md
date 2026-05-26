@@ -94,4 +94,26 @@ former called MinMaxScaler for this. It has a feature_range hyperparameter that 
 you change the range if, for some reason, you don’t want 0–1.
 Standardization is different: first it subtracts the mean value (so standardized values
 always have a zero mean), and then it divides by the standard deviation so that the
-resulting distribution has unit variance. 
+resulting distribution has unit variance. Unlike min-max scaling, standardization
+does not bound values to a specific range, which may be a problem for some algo‐
+rithms (e.g., neural networks often expect an input value ranging from 0 to 1). How‐
+ever, standardization is much less affected by outliers. For example, suppose a district
+had a median income equal to 100 (by mistake). Min-max scaling would then crush
+all the other values from 0–15 down to 0–0.15, whereas standardization would not be
+much affected. Scikit-Learn provides a transformer called StandardScaler for
+standardization.
+
+#### Important! 
+As with all the transformations, it is important to fit the scalers to
+the training data only, not to the full dataset (including the test set).
+Only then can you use them to transform the training set and the
+test set (and new data).
+
+
+Note that the OneHotEncoder returns a sparse matrix, while the num_pipeline returns
+a dense matrix. When there is such a mix of sparse and dense matrices, the Colum
+nTransformer estimates the density of the final matrix (i.e., the ratio of nonzero
+cells), and it returns a sparse matrix if the density is lower than a given threshold (by
+default, sparse_threshold=0.3). In this example, it returns a dense matrix. And
+that’s it! We have a preprocessing pipeline that takes the full housing data and applies
+the appropriate transformations to each column
