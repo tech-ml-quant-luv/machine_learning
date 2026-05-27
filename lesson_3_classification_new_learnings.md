@@ -39,3 +39,33 @@ cross-validation, but instead of returning the evaluation scores, it returns the
 tions made on each test fold. This means that you get a clean prediction for each
 instance in the training set (“clean” meaning that the prediction is made by a model
 that never saw the data during training).
+
+
+Q&A Summary
+
+Does decision_function give accuracy scores?
+No, it gives a raw confidence score (signed distance from the decision boundary).
+
+What is the meaning of threshold here?
+The cutoff value — if score >= threshold, predict positive; else predict negative. Default is 0.
+
+Does it give a confidence interval?
+No, it gives a single confidence score — a number, not a statistical range.
+
+When do we adjust the threshold?
+When accuracy alone isn't enough — e.g., cancer detection (catch all positives) or spam filter (avoid false alarms).
+
+Are accuracy threshold and decision function threshold the same?
+Yes, same threshold — changing it affects all metrics (accuracy, precision, recall), not just one.
+
+Does accuracy threshold lie between 0 and 1?
+Only when using predict_proba() (probabilities); decision_function scores have no fixed range.
+
+Does SGDClassifier have probabilities?
+Not by default; use loss="log_loss" or wrap with CalibratedClassifierCV to get 0–1 probabilities.
+
+Why doesn't SGDClassifier give probabilities by default?
+Its default hinge loss (SVM-style) only produces a decision score mathematically — it doesn't model probabilities, so extra calibration is needed to convert to 0–1.
+
+!important If someone says, “Let’s reach 99% precision,” you should ask, “At
+what recall?”
