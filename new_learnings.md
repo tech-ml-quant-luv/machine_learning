@@ -117,3 +117,54 @@ cells), and it returns a sparse matrix if the density is lower than a given thre
 default, sparse_threshold=0.3). In this example, it returns a dense matrix. And
 that’s it! We have a preprocessing pipeline that takes the full housing data and applies
 the appropriate transformations to each column
+
+#### Cross Validation
+- The output of a cross_val_score method is an array containing the 10 evaluation scores:
+
+Possible solutions for overfitting are
+to simplify the model, constrain it (i.e., regularize it), or get a lot more training data.
+Before you dive much deeper into Random Forests, however, you should try out
+many other models from various categories of Machine Learning algorithms (e.g.,
+several Support Vector Machines with different kernels, and possibly a neural net‐
+work), without spending too much time tweaking the hyperparameters. The goal is to
+shortlist a few (two to five) promising models.
+
+When you have no idea what value a hyperparameter should have,
+a simple approach is to try out consecutive powers of 10 (or a
+smaller number if you want a more fine-grained search, as shown
+in this example with the n_estimators hyperparameter).
+
+If GridSearchCV is initialized with refit=True (which is the
+default), then once it finds the best estimator using crossvalidation, it retrains it on the whole training set. This is usually a
+good idea, since feeding it more data will likely improve its
+performance.
+
+Don’t forget that you can treat some of the data preparation steps as
+hyperparameters. For example, the grid search will automatically
+find out whether or not to add a feature you were not sure about
+(e.g., using the add_bedrooms_per_room hyperparameter of your
+CombinedAttributesAdder transformer). It may similarly be used
+to automatically find the best way to handle outliers, missing fea‐
+tures, feature selection, and more.
+
+With this information, you may want to try dropping some of the less useful features
+(e.g., apparently only one ocean_proximity category is really useful, so you could try
+dropping the others).
+
+You should also look at the specific errors that your system makes, then try to under‐
+stand why it makes them and what could fix the problem (adding extra features or
+getting rid of uninformative ones, cleaning up outliers, etc.).
+
+In some cases, such a point estimate of the generalization error will not be quite
+enough to convince you to launch: what if it is just 0.1% better than the model cur‐
+rently in production? You might want to have an idea of how precise this estimate is.
+For this, you can compute a 95% confidence interval for the generalization error using
+scipy.stats.t.interval()
+
+If you did a lot of hyperparameter tuning, the performance will usually be slightly
+worse than what you measured using cross-validation (because your system ends up
+fine-tuned to perform well on the validation data and will likely not perform as well
+on unknown datasets). It is not the case in this example, but when this happens you
+must resist the temptation to tweak the hyperparameters to make the numbers look
+good on the test set; the improvements would be unlikely to generalize to new data.
+
