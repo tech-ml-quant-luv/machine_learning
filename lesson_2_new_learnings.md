@@ -118,53 +118,120 @@ default, sparse_threshold=0.3). In this example, it returns a dense matrix. And
 that’s it! We have a preprocessing pipeline that takes the full housing data and applies
 the appropriate transformations to each column
 
-#### Cross Validation
-- The output of a cross_val_score method is an array containing the 10 evaluation scores:
 
-Possible solutions for overfitting are
-to simplify the model, constrain it (i.e., regularize it), or get a lot more training data.
-Before you dive much deeper into Random Forests, however, you should try out
-many other models from various categories of Machine Learning algorithms (e.g.,
-several Support Vector Machines with different kernels, and possibly a neural net‐
-work), without spending too much time tweaking the hyperparameters. The goal is to
-shortlist a few (two to five) promising models.
+Here's the cleaned-up version:
 
-When you have no idea what value a hyperparameter should have,
-a simple approach is to try out consecutive powers of 10 (or a
-smaller number if you want a more fine-grained search, as shown
-in this example with the n_estimators hyperparameter).
+---
 
-If GridSearchCV is initialized with refit=True (which is the
-default), then once it finds the best estimator using crossvalidation, it retrains it on the whole training set. This is usually a
-good idea, since feeding it more data will likely improve its
-performance.
+## Cross Validation
 
-Don’t forget that you can treat some of the data preparation steps as
-hyperparameters. For example, the grid search will automatically
-find out whether or not to add a feature you were not sure about
-(e.g., using the add_bedrooms_per_room hyperparameter of your
-CombinedAttributesAdder transformer). It may similarly be used
-to automatically find the best way to handle outliers, missing fea‐
-tures, feature selection, and more.
+- The output of `cross_val_score` is an array containing the N evaluation scores (one per fold).
 
-With this information, you may want to try dropping some of the less useful features
-(e.g., apparently only one ocean_proximity category is really useful, so you could try
-dropping the others).
+---
 
-You should also look at the specific errors that your system makes, then try to under‐
-stand why it makes them and what could fix the problem (adding extra features or
-getting rid of uninformative ones, cleaning up outliers, etc.).
+## Dealing with Overfitting
 
-In some cases, such a point estimate of the generalization error will not be quite
-enough to convince you to launch: what if it is just 0.1% better than the model cur‐
-rently in production? You might want to have an idea of how precise this estimate is.
-For this, you can compute a 95% confidence interval for the generalization error using
-scipy.stats.t.interval()
+Possible solutions for overfitting:
+- Simplify the model
+- Constrain it (i.e., regularize it)
+- Get a lot more training data
 
-If you did a lot of hyperparameter tuning, the performance will usually be slightly
-worse than what you measured using cross-validation (because your system ends up
-fine-tuned to perform well on the validation data and will likely not perform as well
-on unknown datasets). It is not the case in this example, but when this happens you
-must resist the temptation to tweak the hyperparameters to make the numbers look
-good on the test set; the improvements would be unlikely to generalize to new data.
+Before diving deeper into Random Forests, try out many other models from various ML categories (e.g., several SVMs with different kernels, possibly a neural network) — without spending too much time tweaking hyperparameters. The goal is to **shortlist 2–5 promising models**.
 
+---
+
+## Hyperparameter Search Tips
+
+- When you have no idea what value a hyperparameter should have, a simple approach is to try consecutive powers of 10 (or a smaller number for a more fine-grained search, e.g., `n_estimators`).
+- If `GridSearchCV` is initialized with `refit=True` (the default), once it finds the best estimator via cross-validation, it retrains it on the whole training set — usually a good idea since more data tends to improve performance.
+- Data preparation steps can be treated as hyperparameters. For example, grid search can automatically determine whether to add a feature you were unsure about (e.g., `add_bedrooms_per_room` in `CombinedAttributesAdder`). It can similarly find the best way to handle outliers, missing features, and feature selection.
+
+---
+
+## Model Analysis & Error Inspection
+
+- Look at feature importances — if only one category of a feature is useful (e.g., one `ocean_proximity` category), consider dropping the others.
+- Examine specific errors the system makes: understand why they occur and what could fix them (adding features, removing uninformative ones, cleaning outliers, etc.).
+
+---
+
+## Evaluating Generalization Error
+
+- A point estimate of generalization error may not be enough to justify launching. If it's only 0.1% better than the current production model, compute a **95% confidence interval** using `scipy.stats.t.interval()`.
+- If you did a lot of hyperparameter tuning, performance on the test set will often be slightly worse than on the validation set — the model has been fine-tuned to the validation data and may not generalize as well.
+
+> **⚠️ Important**: Resist the temptation to tweak hyperparameters to make test set numbers look good. Those improvements are unlikely to generalize to new data.
+
+---
+
+## Model Deployment
+
+**Option 1 — Web Service (REST API)**
+- Wrap the model in a dedicated web service your application queries via REST API.
+- Load the model at server startup, not on every request.
+- Benefits: easier version upgrades without interrupting the main app, simple horizontal scaling (load-balance across multiple web service instances), and your web app can be written in any language.
+
+**Option 2 — Cloud Deployment (e.g., Google Cloud AI Platform)**
+- Save model with `joblib`, upload to Google Cloud Storage, create a new model version on AI Platform pointing to the GCS file.
+- Gives you a managed web service with automatic load balancing and scaling.
+- Takes JSON input (e.g., district data) and returns JSON predictions.
+
+---
+
+## Monitoring in Production
+
+- Write monitoring code to check live performance at regular intervals and trigger alerts on drops.
+- Watch for both **steep drops** (likely broken infrastructure) and **gentle decay** (model rot — the world changes, last year's data may no longer reflect today's reality).
+
+**Inferring performance from downstream metrics** (when possible):
+- Example: in a recommender system, monitor the number of recommended products sold per day. A drop implicates the model.
+
+**Human raters** (when automated metrics aren't enough):
+- Send a sample of model outputs (especially low-confidence ones) to human raters for evaluation.
+- Raters can be domain experts, crowdsourcing workers (e.g., Amazon Mechanical Turk), or even end users via surveys or repurposed captchas.
+
+---
+
+## Automating the ML Pipeline
+
+Automate as much as possible:
+
+- Collect and label fresh data regularly.
+- Script model training and hyperparameter tuning to run automatically (e.g., daily or weekly).
+- Script evaluation: compare the new model against the previous one on the updated test set; deploy only if performance has not decreased. Investigate if it has.
+
+---
+
+## Input Data Quality Monitoring
+
+Monitor model inputs, not just outputs. Triggers for alerts:
+- More inputs missing a feature than usual
+- Mean or standard deviation of a feature drifts too far from the training set distribution
+- A categorical feature starts containing new, unseen categories
+
+---
+
+## Backups & Rollback
+
+- Keep backups of every model version — enables quick rollback and easy comparison of new vs. old models.
+- Keep backups of every dataset version — allows rollback if fresh data turns out to be corrupted or full of outliers, and lets you evaluate any model against any historical dataset.
+
+---
+
+## Test Set Segmentation
+
+Consider creating multiple subsets of the test set to evaluate performance on specific slices:
+- Most recent data only
+- Specific input types (e.g., inland districts vs. coastal districts)
+
+This gives deeper insight into model strengths and weaknesses.
+
+---
+
+## Key Takeaway
+
+ML involves a lot of infrastructure. The first project takes significant time and effort — but once the infrastructure is in place, going from idea to production becomes much faster.
+
+> It is preferable to be comfortable with the overall process and know 3–4 algorithms well, rather than spending all your time exploring advanced algorithms.
+
+---
