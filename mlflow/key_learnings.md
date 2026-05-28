@@ -1,0 +1,4 @@
+Tracking Runs:
+MLflow Tracking APIs provide a set of functions to track your runs. For example, you can call mlflow.start_run() to start a new run, then call Logging Functions such as mlflow.log_param() and mlflow.log_metric() to log parameters and metrics respectively. Please visit the Tracking API documentation for more details about using these APIs.
+
+Alternatively, Auto-logging offers an ultra-quick setup for starting MLflow tracking. This powerful feature allows you to log metrics, parameters, and models without the need for explicit log statements - all you need to do is call mlflow.autolog() before your training code. Auto-logging supports popular libraries such as Scikit-learn, XGBoost, PyTorch, Keras, Spark, and more. See Automatic Logging Documentation for supported libraries and how to use auto-logging APIs with each of them.
